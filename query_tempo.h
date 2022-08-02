@@ -3,10 +3,12 @@
 
 #include "common.h"
 
-const char TRACE_HASHES_BUCKET_PREFIX[] = "tracehashes";
+const char TEMPO_IP[] = "http://34.121.142.94";
+const char TEMPO_SEARCH[] = ":3200/api/search";
+const char TEMPO_TRACES[] = ":16686/api/traces/";
+
 const char ASTERISK_SERVICE[] = "NONE";
 
-using ::google::cloud::StatusOr;
 namespace bg = boost::graph;
 
 class traces_by_structure {
@@ -29,8 +31,8 @@ struct trace_structure {
 };
 
 // This is the highest level function
-traces_by_structure get_traces_by_structure(
-    trace_structure query_trace, int start_time, int end_time);
+std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace,
+    int start_time, int end_time);
 
 template < typename PropertyMapFirst, typename PropertyMapSecond >
 struct property_map_equivalent_custom {
