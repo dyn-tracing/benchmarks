@@ -2,8 +2,11 @@
 #define BY_STRUCT_H_
 
 #include "common.h"
+#include "nlohmann/json.hpp"
+#include <curl/curl.h>
+#include <unordered_map>
 
-const char TEMPO_IP[] = "http://34.121.142.94";
+const char TEMPO_IP[] = "http://34.170.194.185";
 const char TEMPO_SEARCH[] = ":3200/api/search";
 const char TEMPO_TRACES[] = ":16686/api/traces/";
 
@@ -106,5 +109,15 @@ struct vf2_callback_custom {
         IsomorphismMaps& isomorphism_maps_;
 };
 
+using json = nlohmann::json;
+
+static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp);
+std::string http_get(std::string url);
+json convert_search_result_to_json(std::string data);
+std::vector<std::unordered_map<int, int>> get_isomorphism_mappings (
+    trace_structure &candidate_trace, trace_structure &query_trace);
+graph_type morph_trace_structure_to_boost_graph_type(trace_structure &input_graph);
+trace_structure morph_json_to_trace_struct(json trace_json);
+std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace, int start_time, int end_time);
 
 #endif  // BY_STRUCT_H_ // NOLINT

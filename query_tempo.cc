@@ -1,11 +1,5 @@
 #include "query_tempo.h"
 
-#include "nlohmann/json.hpp"
-
-#include <curl/curl.h>
-
-using json = nlohmann::json;
-
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
@@ -38,6 +32,110 @@ json convert_search_result_to_json(std::string data) {
 }
 
 /**
+ * @brief Get the isomorphism mappings object
+ *
+ * Map: query trace => stored trace
+ *
+ * @param candidate_trace
+ * @param query_trace
+ * @return std::vector<std::unordered_map<int, int>>
+ */
+std::vector<std::unordered_map<int, int>> get_isomorphism_mappings (
+    trace_structure &candidate_trace, trace_structure &query_trace) {
+    graph_type candidate_graph = morph_trace_structure_to_boost_graph_type(candidate_trace);
+    graph_type query_graph = morph_trace_structure_to_boost_graph_type(query_trace);
+
+    vertex_comp_t vertex_comp = make_property_map_equivalent_custom(
+        boost::get(boost::vertex_name_t::vertex_name, query_graph),
+        boost::get(boost::vertex_name_t::vertex_name, candidate_graph));
+
+    std::vector<std::unordered_map<int, int>> isomorphism_maps;
+
+    vf2_callback_custom<graph_type, graph_type, std::vector<std::unordered_map<int, int>>> callback(
+        query_graph, candidate_graph, isomorphism_maps);
+
+    boost::vf2_subgraph_iso(
+        query_graph,
+        candidate_graph,
+        callback,
+        boost::vertex_order_by_mult(query_graph),
+        boost::vertices_equivalent(vertex_comp));
+
+    return isomorphism_maps;
+}
+
+graph_type morph_trace_structure_to_boost_graph_type(trace_structure &input_graph) {
+    graph_type output_graph;
+
+    for (int i = 0; i < input_graph.num_nodes; i++) {
+        boost::add_vertex(vertex_property(input_graph.node_names[i], i), output_graph);
+    }
+
+    for (const auto& elem : input_graph.edges) {
+        boost::add_edge(elem.first, elem.second, output_graph);
+    }
+
+    return output_graph;
+}
+
+std::string fetch_trace(std::string trace_id) {
+    std::string url = std::string(TEMPO_IP) + std::string(TEMPO_TRACES) + trace_id;
+    auto raw_response = http_get(url);
+    return raw_response;
+}
+
+void print_trace_structure(trace_structure trace) {
+    std::cout << "n: " << trace.num_nodes << std::endl;
+    std::cout << "node names:" << std::endl;
+    for (const auto& elem : trace.node_names) {
+        std::cout << elem.first << " : " << elem.second << std::endl;
+    }
+    std::cout << "edges:" << std::endl;
+    for (const auto& elem : trace.edges) {
+        std::cout << elem.first << " : " << elem.second << std::endl;
+    }
+}
+
+
+trace_structure morph_json_to_trace_struct(json trace_json) {
+    if (trace_json["data"].size() < 1) {
+        return {};
+    }
+    auto trace = trace_json["data"][0];
+    auto trace_processes = trace["processes"];
+    auto trace_spans = trace["spans"];
+
+    std::unordered_map<std::string, int> span_id_to_node_id;
+    int id = 0;
+    for (auto ele : trace_spans) {
+        span_id_to_node_id[ele["spanID"]] = id;
+        id++;
+    }
+
+    trace_structure response;
+    response.num_nodes = span_id_to_node_id.size();
+
+    for (auto ele : trace_spans) {
+        auto id = span_id_to_node_id[ele["spanID"]];
+        std::string processId = ele["processID"];
+        response.node_names[id] = std::string(trace_processes[processId]["serviceName"]);
+    }
+
+    for (auto ele : trace_spans) {
+        auto id = span_id_to_node_id[ele["spanID"]];
+        auto refs = ele["references"];
+        for (auto ref : refs) {
+            if (ref["refType"] == "CHILD_OF") {
+                auto parent_span_id = ref["spanID"];
+                auto parent_id = span_id_to_node_id[parent_span_id];
+                response.edges.insert(std::make_pair(parent_id, id));
+            }
+        }
+    }
+
+    return response;
+}
+/**
  * Call this function for 3 seconds interval
  * */
 std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace, int start_time, int end_time) {
@@ -46,28 +144,30 @@ std::vector<std::string> get_traces_by_structure_and_interval(trace_structure qu
             only be called for atmost 3 seconds interval" << std::endl;  
     }
 
-    /**
-     * 1. Get all trace ids of the period
-     * 2. For each trace id, check if the trace conforms to the query_trace stucture using isomorphism
-     * 2.a. fetch trace
-     * 2.b. convert to trace_structure object
-     * 3.c. apply boost v2 subisomorphims
-     * */
-    std::string url = std::string(TEMPO_IP) + std::string(TEMPO_SEARCH) ; // + "?start=" + \
-        // std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=50000";
-    
-    std::cout << url << std::endl;
+    std::string url = std::string(TEMPO_IP) + std::string(TEMPO_SEARCH) + "?start=" + \
+        std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=50000";
+
     auto raw_response = http_get(url);
     auto response = convert_search_result_to_json(raw_response);
     if (response["traces"] == NULL) {
-        std::cout << "No traces in interval [" << start_time << ", " << end_time << "]!" << endl;
+        std::cout << "No traces in interval [" << start_time << ", " << end_time << "]!" << std::endl;
         return {};
     }
+
+    std::vector<std::string> res;
     for (auto ele : response["traces"]) {
-        // convert it to trace_structure
-        // check for isomorphism
+        auto trace = convert_search_result_to_json(fetch_trace(ele["traceID"]));
+        auto candidate_trace = morph_json_to_trace_struct(trace);
+        auto iso_maps = get_isomorphism_mappings(candidate_trace, query_trace);
+        if (iso_maps.size() == 0) {
+            print_trace_structure(candidate_trace);
+        } else {
+            std::cout << "." << std::endl;
+        }
+        res.push_back(ele["traceID"]);
     }
-    return {};
+
+    return res;
 }
 
 int main() {
@@ -80,6 +180,6 @@ int main() {
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
-    auto res = get_traces_by_structure_and_interval(query_trace, 1659468533, 1659468534);
+    auto res = get_traces_by_structure_and_interval(query_trace, 1659623757, 1659623758);
     return 0;
 }
