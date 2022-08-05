@@ -34,8 +34,8 @@ struct trace_structure {
 };
 
 // This is the highest level function
-std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace,
-    int start_time, int end_time);
+std::vector<std::string> get_traces_by_structure_and_interval(
+    trace_structure query_trace, int start_time, int end_time, int limit);
 
 template < typename PropertyMapFirst, typename PropertyMapSecond >
 struct property_map_equivalent_custom {
@@ -118,6 +118,7 @@ std::vector<std::unordered_map<int, int>> get_isomorphism_mappings (
     trace_structure &candidate_trace, trace_structure &query_trace);
 graph_type morph_trace_structure_to_boost_graph_type(trace_structure &input_graph);
 trace_structure morph_json_to_trace_struct(json trace_json);
+std::vector<std::string> get_traces_by_structure(trace_structure query_trace, int start_time, int end_time);
 std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace, int start_time, int end_time);
 
 #endif  // BY_STRUCT_H_ // NOLINT

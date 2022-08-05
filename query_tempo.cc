@@ -138,14 +138,13 @@ trace_structure morph_json_to_trace_struct(json trace_json) {
 /**
  * Call this function for 3 seconds interval
  * */
-std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace, int start_time, int end_time) {
-    if (end_time-start_time > 3) {
-        std::cerr << "get_traces_by_structure_and_interval should \
-            only be called for atmost 3 seconds interval" << std::endl;  
+std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace, int start_time, int end_time, int limit) {
+    if (end_time == start_time || limit < 1 || query_trace.num_nodes < 1) {
+        return {};
     }
 
     std::string url = std::string(TEMPO_IP) + std::string(TEMPO_SEARCH) + "?start=" + \
-        std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=50000";
+        std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=" + std::to_string(limit);
 
     auto raw_response = http_get(url);
     auto response = convert_search_result_to_json(raw_response);
@@ -170,6 +169,20 @@ std::vector<std::string> get_traces_by_structure_and_interval(trace_structure qu
     return res;
 }
 
+std::vector<std::string> get_traces_by_structure(trace_structure query_trace, int start_time, int end_time) {
+    std::vector<std::string> response;
+
+    int i = start_time, j = start_time + 3;
+    while (i < end_time) {
+        auto trace_ids = get_traces_by_structure_and_interval(query_trace, i, std::min(j, end_time), 50000);
+        response.insert(response.end(), trace_ids.begin(), trace_ids.end());
+        i = j+1;
+        j = i+3;
+    }
+
+    return response;
+}
+
 int main() {
     trace_structure query_trace;
     query_trace.num_nodes = 3;
@@ -180,6 +193,7 @@ int main() {
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
-    auto res = get_traces_by_structure_and_interval(query_trace, 1659623757, 1659623758);
+    // start time and end time should be in seconds. 
+    auto res = get_traces_by_structure(query_trace, 1659623757, 1659623758);
     return 0;
 }
