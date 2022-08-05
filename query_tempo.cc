@@ -135,14 +135,8 @@ trace_structure morph_json_to_trace_struct(json trace_json) {
 
     return response;
 }
-/**
- * Call this function for 3 seconds interval
- * */
-std::vector<std::string> get_traces_by_structure_and_interval(trace_structure query_trace, int start_time, int end_time, int limit) {
-    if (end_time == start_time || limit < 1 || query_trace.num_nodes < 1) {
-        return {};
-    }
 
+json get_trace_ids_for_interval(int start_time, int end_time, int limit) {
     std::string url = std::string(TEMPO_IP) + std::string(TEMPO_SEARCH) + "?start=" + \
         std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=" + std::to_string(limit);
 
@@ -152,33 +146,66 @@ std::vector<std::string> get_traces_by_structure_and_interval(trace_structure qu
         std::cout << "No traces in interval [" << start_time << ", " << end_time << "]!" << std::endl;
         return {};
     }
+    return response["traces"];
+}
 
-    std::vector<std::string> res;
-    for (auto ele : response["traces"]) {
-        auto trace = convert_search_result_to_json(fetch_trace(ele["traceID"]));
-        auto candidate_trace = morph_json_to_trace_struct(trace);
-        auto iso_maps = get_isomorphism_mappings(candidate_trace, query_trace);
-        if (iso_maps.size() == 0) {
-            print_trace_structure(candidate_trace);
-        } else {
-            std::cout << "." << std::endl;
-        }
-        res.push_back(ele["traceID"]);
+std::string fetch_and_filter_by_structure(json trace_metadata, trace_structure query_trace) {
+    auto trace = convert_search_result_to_json(fetch_trace(trace_metadata["traceID"]));
+    auto candidate_trace = morph_json_to_trace_struct(trace);
+    auto iso_maps = get_isomorphism_mappings(candidate_trace, query_trace);
+    if (iso_maps.size() == 0) {
+        return trace_metadata["traceID"];
+    }
+    return "";
+}
+
+/**
+ * Call this function for 3 seconds interval
+ * */
+std::vector<std::string> get_traces_by_structure_for_interval(trace_structure query_trace, int start_time, int end_time, int limit) {
+    if (end_time == start_time || limit < 1 || query_trace.num_nodes < 1) {
+        return {};
     }
 
-    return res;
+    auto traces_metadata = get_trace_ids_for_interval(start_time, end_time, limit);
+
+    std::vector<std::future<std::string>> response_futures;
+    for (auto ele : traces_metadata) {
+        response_futures.push_back(
+            std::async(std::launch::async, fetch_and_filter_by_structure, ele, query_trace));
+    }
+
+    std::vector<std::string> response;
+    for_each(response_futures.begin(), response_futures.end(),
+    [&response](std::future<std::string>& fut) {
+        std::string trace_id = fut.get();
+        if (false == trace_id.empty()) {
+            response.push_back(trace_id);
+        }
+	});
+
+    return response;
 }
 
 std::vector<std::string> get_traces_by_structure(trace_structure query_trace, int start_time, int end_time) {
-    std::vector<std::string> response;
-
     int i = start_time, j = start_time + 3;
+    std::vector<std::future<std::vector<std::string>>> response_futures;
+    int limit = 50000;
+
     while (i < end_time) {
-        auto trace_ids = get_traces_by_structure_and_interval(query_trace, i, std::min(j, end_time), 50000);
-        response.insert(response.end(), trace_ids.begin(), trace_ids.end());
+        response_futures.push_back(
+            std::async(std::launch::async, get_traces_by_structure_for_interval, query_trace, i, std::min(j, end_time), limit));
+
         i = j+1;
         j = i+3;
     }
+
+    std::vector<std::string> response;
+    for_each(response_futures.begin(), response_futures.end(),
+    [&response](std::future<std::vector<std::string>>& fut) {
+        std::vector<std::string> trace_ids = fut.get();
+        response.insert(response.end(), trace_ids.begin(), trace_ids.end());
+	});
 
     return response;
 }
