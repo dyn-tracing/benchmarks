@@ -8,7 +8,7 @@
 #include <future>
 
 
-const char TEMPO_IP[] = "http://34.121.36.239";
+const char TEMPO_IP[] = "http://35.238.24.105";
 const char TEMPO_SEARCH[] = ":3200/api/search";
 const char TEMPO_TRACES[] = ":16686/api/traces/";
 

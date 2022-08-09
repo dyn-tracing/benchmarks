@@ -234,9 +234,18 @@ int main() {
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
+    boost::posix_time::ptime start, stop;
+	start = boost::posix_time::microsec_clock::local_time();
     // start time and end time should be in seconds. 
-    auto res = get_traces_by_structure(query_trace, 1659623757, 1659623759);
-    // auto res = get_traces_by_structure(query_trace, 1659623757, 1659623762);
+    // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539); // 8 seconds (ran after 5 minutes), 16 seconds (after 15 minutes)
+    auto res = get_traces_by_structure(query_trace, 1660073622, 1660073623); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
+
+    stop = boost::posix_time::microsec_clock::local_time();
+    boost::posix_time::time_duration dur = stop - start;
+	int64_t milliseconds = dur.total_milliseconds();
+	std::cout << "Time taken: " << milliseconds << std::endl;
+    // auto res = get_traces_by_structure(query_trace, 1660060182, 1660060192);
     std::cout << "Response: " << res.size() << std::endl;
+    std::cout << "Response: " << res[0] << std::endl;
     return 0;
 }
