@@ -27,7 +27,15 @@ std::string http_get(std::string url) {
 }
 
 json convert_search_result_to_json(std::string data) {
-    json obj = json::parse(data);
+    json obj;
+    try {
+        obj = json::parse(data);
+    } catch(const std::exception& e) {
+        std::cerr << std::setw(4) << data << std::endl;
+        std::cerr << e.what() << '\n';
+        exit(1);
+    }
+
     return obj;
 }
 
@@ -170,9 +178,16 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     auto traces_metadata = get_trace_ids_for_interval(start_time, end_time, limit);
 
     std::vector<std::future<std::string>> response_futures;
+
+    int count = 1;
     for (auto ele : traces_metadata) {
         response_futures.push_back(
             std::async(std::launch::async, fetch_and_filter_by_structure, ele, query_trace));
+        
+        if (count%100 == 0) {
+            response_futures[response_futures.size()-1].wait();
+        }
+        count++;
     }
 
     std::vector<std::string> response;
@@ -183,7 +198,6 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
             response.push_back(trace_id);
         }
 	});
-
     return response;
 }
 
@@ -221,6 +235,8 @@ int main() {
     query_trace.edges.insert(std::make_pair(1, 2));
 
     // start time and end time should be in seconds. 
-    auto res = get_traces_by_structure(query_trace, 1659623757, 1659623758);
+    auto res = get_traces_by_structure(query_trace, 1659623757, 1659623759);
+    // auto res = get_traces_by_structure(query_trace, 1659623757, 1659623762);
+    std::cout << "Response: " << res.size() << std::endl;
     return 0;
 }
