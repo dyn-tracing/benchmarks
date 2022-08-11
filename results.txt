@@ -1,0 +1,9 @@
+Strategy: Let the cluster run for 10 minutes so that there are some traces
+
+Tempo:
+    Get traces that are 1 minute old (i.e., are at VM)(for 10 seconds): 35.3 seconds
+    Get traces that are 20 minutes old (i.e., are at GCS) (for 10 seconds): 42.2 seconds
+
+Snicket++:
+    Get traces that are 1 minute old (for 10 seconds): 2.9 seconds
+    Get traces that are 20 minute old (for 10 seconds): 3.0 seconds
