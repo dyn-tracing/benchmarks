@@ -1,9 +1,20 @@
-Strategy: Let the cluster run for 10 minutes so that there are some traces
+
+Query: Get me all traces where frontend calls adservice which calls some other service. 
+
+
+Strategy: Let the cluster run for 10 minutes so that there are some traces (being generated at 10k traces /s )
+
 
 Tempo:
-    Get traces that are 1 minute old (i.e., are at VM)(for 10 seconds): 35.3 seconds
+    Get traces that are 1 minute old (i.e., are at VM)(for 10 seconds): 35.3 seconds (compression??)
     Get traces that are 20 minutes old (i.e., are at GCS) (for 10 seconds): 42.2 seconds
+
+
 
 Snicket++:
     Get traces that are 1 minute old (for 10 seconds): 2.9 seconds
     Get traces that are 20 minute old (for 10 seconds): 3.0 seconds
+
+Running trace id query on VM vs GCS
+
+Add the time constraint in all queries.
