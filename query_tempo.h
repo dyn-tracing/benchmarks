@@ -8,7 +8,7 @@
 #include <future>
 
 
-const char TEMPO_IP[] = "http://35.238.24.105";
+const char TEMPO_IP[] = "http://35.194.33.59";
 const char TEMPO_SEARCH[] = ":3200/api/search";
 const char TEMPO_TRACES[] = ":16686/api/traces/";
 
@@ -121,6 +121,7 @@ graph_type morph_trace_structure_to_boost_graph_type(trace_structure &input_grap
 trace_structure morph_json_to_trace_struct(json trace_json);
 std::vector<std::string> get_traces_by_structure_for_interval(trace_structure query_trace, int start_time, int end_time, int limit) ;
 json get_trace_ids_for_interval(int start_time, int end_time, int limit);
-std::string fetch_and_filter_by_structure(json trace_metadata, trace_structure query_trace);
+std::string fetch_and_filter_by_structure(json trace_metadata, trace_structure query_trace, int start, int end);
+std::string fetch_trace(std::string trace_id, int start, int end);
 
 #endif  // BY_STRUCT_H_ // NOLINT

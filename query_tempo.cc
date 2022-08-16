@@ -86,8 +86,8 @@ graph_type morph_trace_structure_to_boost_graph_type(trace_structure &input_grap
     return output_graph;
 }
 
-std::string fetch_trace(std::string trace_id) {
-    std::string url = std::string(TEMPO_IP) + std::string(TEMPO_TRACES) + trace_id;
+std::string fetch_trace(std::string trace_id, int start, int end) {
+    std::string url = std::string(TEMPO_IP) + std::string(TEMPO_TRACES) + trace_id + "?start=" + std::to_string(start) + "&end=" + std::to_string(end);
     auto raw_response = http_get(url);
     return raw_response;
 }
@@ -157,8 +157,8 @@ json get_trace_ids_for_interval(int start_time, int end_time, int limit) {
     return response["traces"];
 }
 
-std::string fetch_and_filter_by_structure(json trace_metadata, trace_structure query_trace) {
-    auto trace = convert_search_result_to_json(fetch_trace(trace_metadata["traceID"]));
+std::string fetch_and_filter_by_structure(json trace_metadata, trace_structure query_trace, int start, int end) {
+    auto trace = convert_search_result_to_json(fetch_trace(trace_metadata["traceID"], start, end));
     auto candidate_trace = morph_json_to_trace_struct(trace);
     auto iso_maps = get_isomorphism_mappings(candidate_trace, query_trace);
     if (iso_maps.size() == 0) {
@@ -182,7 +182,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     int count = 1;
     for (auto ele : traces_metadata) {
         response_futures.push_back(
-            std::async(std::launch::async, fetch_and_filter_by_structure, ele, query_trace));
+            std::async(std::launch::async, fetch_and_filter_by_structure, ele, query_trace, start_time, end_time));
         
         if (count%100 == 0) {
             response_futures[response_futures.size()-1].wait();
@@ -238,7 +238,7 @@ int main() {
 	start = boost::posix_time::microsec_clock::local_time();
     // start time and end time should be in seconds. 
     // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539); // 8 seconds (ran after 5 minutes), 16 seconds (after 15 minutes)
-    auto res = get_traces_by_structure(query_trace, 1660073622, 1660073623); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
+    auto res = get_traces_by_structure(query_trace, 1660657857, 1660657867); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
 
     stop = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration dur = stop - start;
