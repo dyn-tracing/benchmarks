@@ -238,7 +238,7 @@ int main() {
 	start = boost::posix_time::microsec_clock::local_time();
     // start time and end time should be in seconds. 
     // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539); // 8 seconds (ran after 5 minutes), 16 seconds (after 15 minutes)
-    auto res = get_traces_by_structure(query_trace, 1660662467, 1660662470); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
+    auto res = get_traces_by_structure(query_trace, 1660663613, 1660663620); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
 
     stop = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration dur = stop - start;
