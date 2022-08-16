@@ -2,10 +2,11 @@ Strategy: Let the cluster run for 10 minutes so that there are some traces (bein
 
 Graph Query:
     Query: Get me all traces where frontend calls adservice which calls some other service. 
+    Resolution: Tempo brute forces, snicket has a folders index
 
     Tempo:
         With Data Coming In:
-            Get traces that are 1 minute old (i.e., are at VM): 35.3 seconds
+            Get traces that are 1 minute old (i.e., are at VM): 29 seconds
             Get traces that are 20 minutes old (i.e., are at GCS) : 42.2 seconds
         With No Data Coming In:
             Get traces that are 1 minute old (i.e., are at VM): 9 seconds
@@ -16,4 +17,17 @@ Graph Query:
         Get traces that are 20 minute old : 3.0 seconds
 
 Plain Query:
-    TODO
+    Query: Get trace with id <trace_id>
+    Resolution: Tempo has bloom filters for search by trace id, Snicket has SBT index
+
+    Tempo:
+        With Data Coming In:
+            Get traces that are 1 minute old (i.e., are at VM): 18 milliseconds
+            Get traces that are 20 minutes old (i.e., are at GCS) : 230 milliseconds
+        With No Data Coming In:
+            Get traces that are 1 minute old (i.e., are at VM): 17 milliseconds
+            Get traces that are 20 minutes old (i.e., are at GCS): 124.5 milliseconds
+
+    Snicket++:
+        Get traces that are 1 minute old : ??
+        Get traces that are 20 minute old : ??
