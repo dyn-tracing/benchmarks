@@ -224,6 +224,17 @@ std::vector<std::string> get_traces_by_structure(trace_structure query_trace, in
     return response;
 }
 
+json get_trace_by_id(std::string trace_id, int start_time = -1, int end_time = -1) {
+    std::string url = std::string(TEMPO_IP) + std::string(TEMPO_TRACES) + trace_id;
+    
+    if (start_time != -1 && end_time != -1) {
+        url += "?start=" + std::to_string(start_time) + "&end=" + std::to_string(end_time);
+    }
+
+    auto raw_response = http_get(url);
+    return convert_search_result_to_json(raw_response);
+}
+
 int main() {
     trace_structure query_trace;
     query_trace.num_nodes = 3;
@@ -238,14 +249,14 @@ int main() {
 	start = boost::posix_time::microsec_clock::local_time();
     // start time and end time should be in seconds. 
     // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539); // 8 seconds (ran after 5 minutes), 16 seconds (after 15 minutes)
-    auto res = get_traces_by_structure(query_trace, 1660663613, 1660663620); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
-
+    // auto res = get_traces_by_structure(query_trace, 1660663613, 1660663620); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
+    auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
     stop = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration dur = stop - start;
 	int64_t milliseconds = dur.total_milliseconds();
 	std::cout << "Time taken: " << milliseconds << std::endl;
     // auto res = get_traces_by_structure(query_trace, 1660060182, 1660060192);
-    std::cout << "Response: " << res.size() << std::endl;
-    std::cout << "Response: " << res[0] << std::endl;
+    // std::cout << "Response: " << res.size() << std::endl;
+    // std::cout << "Response: " << res[0] << std::endl;
     return 0;
 }
