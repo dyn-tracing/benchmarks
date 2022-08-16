@@ -184,7 +184,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
         response_futures.push_back(
             std::async(std::launch::async, fetch_and_filter_by_structure, ele, query_trace, start_time, end_time));
         
-        if (count%100 == 0) {
+        if (count%75 == 0) {
             response_futures[response_futures.size()-1].wait();
         }
         count++;
@@ -238,7 +238,7 @@ int main() {
 	start = boost::posix_time::microsec_clock::local_time();
     // start time and end time should be in seconds. 
     // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539); // 8 seconds (ran after 5 minutes), 16 seconds (after 15 minutes)
-    auto res = get_traces_by_structure(query_trace, 1660657857, 1660657867); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
+    auto res = get_traces_by_structure(query_trace, 1660662467, 1660662470); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
 
     stop = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration dur = stop - start;
