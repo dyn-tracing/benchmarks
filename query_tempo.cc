@@ -157,20 +157,43 @@ json get_trace_ids_for_interval(int start_time, int end_time, int limit) {
     return response["traces"];
 }
 
-std::string fetch_and_filter_by_structure(json trace_metadata, trace_structure query_trace, int start, int end) {
+// is not very general, good enough for benchmarks queries
+bool does_trace_satisfy_condition_for_service(std::string, json trace, std::vector<std::string> condition) {
+    std::cout << "trace:" << std::setw(4) << trace << std::endl;
+    return false;
+}
+
+std::string fetch_and_filter(json trace_metadata, trace_structure query_trace, int start, int end, std::vector<std::vector<std::string>> conditions) {
     auto trace = convert_search_result_to_json(fetch_trace(trace_metadata["traceID"], start, end));
     auto candidate_trace = morph_json_to_trace_struct(trace);
     auto iso_maps = get_isomorphism_mappings(candidate_trace, query_trace);
     if (iso_maps.size() == 0) {
-        return trace_metadata["traceID"];
+        return "";
     }
+
+    for (auto iso_map : iso_maps) {
+        bool all_holds = true;
+        for (auto cond: conditions) {
+            auto service_name = candidate_trace.node_names[iso_map[std::stoi(cond[0])]];
+            auto condition_holds = does_trace_satisfy_condition_for_service(service_name, trace, cond);
+            if (!condition_holds) {
+                all_holds = false;
+                break;
+            }
+        }
+        if (all_holds) {
+            return trace_metadata["traceID"];
+        }
+    }
+
     return "";
+    
 }
 
 /**
  * Call this function for 3 seconds interval
  * */
-std::vector<std::string> get_traces_by_structure_for_interval(trace_structure query_trace, int start_time, int end_time, int limit) {
+std::vector<std::string> get_traces_by_structure_for_interval(trace_structure query_trace, int start_time, int end_time, int limit, std::vector<std::vector<std::string>> conditions) {
     if (end_time == start_time || limit < 1 || query_trace.num_nodes < 1) {
         return {};
     }
@@ -182,7 +205,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     int count = 1;
     for (auto ele : traces_metadata) {
         response_futures.push_back(
-            std::async(std::launch::async, fetch_and_filter_by_structure, ele, query_trace, start_time, end_time));
+            std::async(std::launch::async, fetch_and_filter, ele, query_trace, start_time, end_time, conditions));
         
         if (count%75 == 0) {
             response_futures[response_futures.size()-1].wait();
@@ -201,14 +224,14 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     return response;
 }
 
-std::vector<std::string> get_traces_by_structure(trace_structure query_trace, int start_time, int end_time) {
+std::vector<std::string> get_traces_by_structure(trace_structure query_trace, int start_time, int end_time, std::vector<std::vector<std::string>> conditions) {
     int i = start_time, j = start_time + 3;
     std::vector<std::future<std::vector<std::string>>> response_futures;
     int limit = 50000;
 
     while (i < end_time) {
         response_futures.push_back(
-            std::async(std::launch::async, get_traces_by_structure_for_interval, query_trace, i, std::min(j, end_time), limit));
+            std::async(std::launch::async, get_traces_by_structure_for_interval, query_trace, i, std::min(j, end_time), limit, conditions));
 
         i = j+1;
         j = i+3;
@@ -245,12 +268,16 @@ int main() {
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
+    std::vector<std::vector<std::string>> conditions = {
+        {"0", "duration", "100"}
+    };
+
     boost::posix_time::ptime start, stop;
 	start = boost::posix_time::microsec_clock::local_time();
     // start time and end time should be in seconds. 
-    // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539); // 8 seconds (ran after 5 minutes), 16 seconds (after 15 minutes)
-    // auto res = get_traces_by_structure(query_trace, 1660663613, 1660663620); // 16.5 seconds (after 2 minutes), 23 seconds (after 15 minutes)
-    auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
+    // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539);
+    auto res = get_traces_by_structure(query_trace, 1660663613, 1660663620, conditions);
+    // auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
     stop = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration dur = stop - start;
 	int64_t milliseconds = dur.total_milliseconds();
