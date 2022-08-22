@@ -215,6 +215,15 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     }
 
     auto traces_metadata = get_trace_ids_for_interval(start_time, end_time, limit);
+    
+    std::vector<std::string> response;
+    for (auto ele : traces_metadata) {
+        auto res = fetch_and_filter(ele, query_trace, start_time, end_time, conditions);
+        if (false == res.empty()) {
+            response.push_back(res);
+        }
+    }
+    return response;
 
     std::vector<std::future<std::string>> response_futures;
 
@@ -241,7 +250,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
 }
 
 std::vector<std::string> get_traces_by_structure(trace_structure query_trace, int start_time, int end_time, std::vector<std::vector<std::string>> conditions) {
-    int i = start_time, j = start_time + 5;
+    int i = start_time, j = start_time + 3;
     std::vector<std::future<std::vector<std::string>>> response_futures;
     int limit = 50000;
 
@@ -250,7 +259,7 @@ std::vector<std::string> get_traces_by_structure(trace_structure query_trace, in
             std::async(std::launch::async, get_traces_by_structure_for_interval, query_trace, i, std::min(j, end_time), limit, conditions));
 
         i = j+1;
-        j = i+5;
+        j = i+3;
     }
 
     std::vector<std::string> response;
