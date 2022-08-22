@@ -183,6 +183,10 @@ std::string fetch_and_filter(json trace_metadata, trace_structure query_trace, i
         return "";
     }
 
+    if (conditions.size() < 1) {
+        return trace_metadata["traceID"];
+    }
+
     for (auto iso_map : iso_maps) {
         bool all_holds = true;
         for (auto cond: conditions) {
@@ -272,7 +276,7 @@ json get_trace_by_id(std::string trace_id, int start_time = -1, int end_time = -
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
+    if (argc < 3) {
         std::cerr << "Incorrect Argument List. Die!" << std::endl;
         exit(1);
     }
@@ -287,9 +291,13 @@ int main(int argc, char *argv[]) {
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
-    std::vector<std::vector<std::string>> conditions = {
-        {"0", "duration", "100"}
-    };
+    std::vector<std::vector<std::string>> conditions;
+    
+    if (argv[2] != "no_condition") {
+        conditions = {
+            {"0", "duration", "100"}
+        };
+    }
 
     boost::posix_time::ptime start, stop;
 	start = boost::posix_time::microsec_clock::local_time();
