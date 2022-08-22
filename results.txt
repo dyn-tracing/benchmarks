@@ -3,6 +3,27 @@ All queries are performed on custom interval of 10 seconds
 Q1: 
 GET trace ids where (frontend)->(adservice)->(a)
 
+46049
+76907
+61901
+48709
+47959
+54906
+55625
+50921
+60344
+63150
+63792
+49381
+50844
+50320
+56315
+56834
+54760
+61724
+63505
+58188
+
 Q2:
 GET trace ids where (frontend)->(adservice)->(currencyservice)
 
