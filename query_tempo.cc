@@ -307,7 +307,7 @@ int main(int argc, char *argv[]) {
         start = boost::posix_time::microsec_clock::local_time();
         // start time and end time should be in seconds. 
         // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539);
-        auto res = get_traces_by_structure(query_trace, 1660683159, 1660683169, conditions);
+        auto res = get_traces_by_structure(query_trace, 1661196812, 1661196822, conditions);
         // auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
         stop = boost::posix_time::microsec_clock::local_time();
         boost::posix_time::time_duration dur = stop - start;
