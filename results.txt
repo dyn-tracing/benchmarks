@@ -30,6 +30,27 @@ Time taken: 50212
 Q3: 
 GET trace ids where (frontend)->(adservice)->(checkoutservice) where end to end latency greater than 100 milliseconds
 
+51748
+58481
+56816
+55650
+50257
+62140
+63999
+58449
+46452
+50629
+67219
+47026
+53204
+69152
+55022
+55233
+62224
+55539
+52312
+55347
+
 Q4: 
 GET trace ids where (frontend)->(adservice)->(checkoutservice) where duration of checkoutservice span is greater than 50 milliseconds
 

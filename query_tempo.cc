@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
     query_trace.edges.insert(std::make_pair(1, 2));
 
     std::vector<std::vector<std::string>> conditions = {
-        {"0", "duration", "100"}
+        {"2", "duration", "50"}
     };
 
     for (int i = 0; i < 20; i++) {
