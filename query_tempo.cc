@@ -295,14 +295,12 @@ int main(int argc, char *argv[]) {
     query_trace.num_nodes = 3;
     query_trace.node_names.insert(std::make_pair(0, "frontend"));
     query_trace.node_names.insert(std::make_pair(1, "adservice"));
-    query_trace.node_names.insert(std::make_pair(2, "checkoutservice"));
+    query_trace.node_names.insert(std::make_pair(2, ASTERISK_SERVICE));
 
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
-    std::vector<std::vector<std::string>> conditions = {
-        {"2", "duration", "50"}
-    };
+    std::vector<std::vector<std::string>> conditions;
 
     for (int i = 0; i < 20; i++) {
         boost::posix_time::ptime start, stop;

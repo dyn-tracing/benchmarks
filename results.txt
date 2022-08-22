@@ -6,26 +6,26 @@ GET trace ids where (frontend)->(adservice)->(a)
 Q2:
 GET trace ids where (frontend)->(adservice)->(currencyservice)
 
-Time taken: 43202
-Time taken: 58000
-Time taken: 56691
-Time taken: 53367
-Time taken: 50604
-Time taken: 58861
-Time taken: 61051
-Time taken: 51006
-Time taken: 52873
-Time taken: 54511
-Time taken: 54686
-Time taken: 46527
-Time taken: 61522
-Time taken: 50390
-Time taken: 55068
-Time taken: 56800
-Time taken: 48930
-Time taken: 53741
-Time taken: 50983
-Time taken: 50212
+43202
+58000
+56691
+53367
+50604
+58861
+61051
+51006
+52873
+54511
+54686
+46527
+61522
+50390
+55068
+56800
+48930
+53741
+50983
+50212
 
 Q3: 
 GET trace ids where (frontend)->(adservice)->(checkoutservice) where end to end latency greater than 100 milliseconds
@@ -53,6 +53,27 @@ GET trace ids where (frontend)->(adservice)->(checkoutservice) where end to end 
 
 Q4: 
 GET trace ids where (frontend)->(adservice)->(checkoutservice) where duration of checkoutservice span is greater than 50 milliseconds
+
+43392
+51488
+48708
+47677
+66235
+45879
+65216
+50483
+58942
+48346
+45307
+46678
+45116
+51302
+47194
+51211
+46715
+59362
+66973
+46753
 
 Q5: 
 GET trace ids where (frontend)->(adservice)->(a) AND starttime of adservice span is greater than x
