@@ -175,7 +175,7 @@ bool does_trace_satisfy_condition_for_service(std::string service, json& trace, 
     return false;
 }
 
-std::string fetch_and_filter(json& trace_metadata, trace_structure query_trace, int start, int end, std::vector<std::vector<std::string>> conditions) {
+std::string fetch_and_filter(json trace_metadata, trace_structure query_trace, int start, int end, std::vector<std::vector<std::string>> conditions) {
     auto trace = convert_search_result_to_json(fetch_trace(trace_metadata["traceID"], start, end));
     auto candidate_trace = morph_json_to_trace_struct(trace);
     auto iso_maps = get_isomorphism_mappings(candidate_trace, query_trace);
@@ -230,7 +230,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     int count = 1;
     for (auto ele : traces_metadata) {
         response_futures.push_back(
-            std::async(std::launch::async, fetch_and_filter, std::ref(ele), query_trace, start_time, end_time, conditions));
+            std::async(std::launch::async, fetch_and_filter, ele, query_trace, start_time, end_time, conditions));
         
         if (count%500 == 0) {
             response_futures[response_futures.size()-1].wait();
