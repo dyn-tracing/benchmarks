@@ -147,7 +147,6 @@ trace_structure morph_json_to_trace_struct(json trace_json) {
 json get_trace_ids_for_interval(int start_time, int end_time, int limit) {
     std::string url = std::string(TEMPO_IP) + std::string(TEMPO_SEARCH) + "?start=" + \
         std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=" + std::to_string(limit);
-
     auto raw_response = http_get(url);
     auto response = convert_search_result_to_json(raw_response);
     if (response["traces"] == NULL) {
@@ -158,8 +157,21 @@ json get_trace_ids_for_interval(int start_time, int end_time, int limit) {
 }
 
 // is not very general, good enough for benchmarks queries
-bool does_trace_satisfy_condition_for_service(std::string, json trace, std::vector<std::string> condition) {
-    std::cout << "trace:" << std::setw(4) << trace << std::endl;
+bool does_trace_satisfy_condition_for_service(std::string service, json trace, std::vector<std::string> condition) {
+    if (trace["data"].size() < 1) {
+        return false;
+    }
+
+    trace = trace["data"][0];
+    for (auto span : trace["spans"]) {
+        std::string processId = span["processID"];
+        if (trace["processes"][processId]["serviceName"] == service) {
+            if (int(span[condition[1]]) >= std::stoi(condition[2])) {
+                return true;
+            }
+            return false;
+        }
+    }
     return false;
 }
 
@@ -207,7 +219,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
         response_futures.push_back(
             std::async(std::launch::async, fetch_and_filter, ele, query_trace, start_time, end_time, conditions));
         
-        if (count%75 == 0) {
+        if (count%500 == 0) {
             response_futures[response_futures.size()-1].wait();
         }
         count++;
@@ -258,7 +270,14 @@ json get_trace_by_id(std::string trace_id, int start_time = -1, int end_time = -
     return convert_search_result_to_json(raw_response);
 }
 
-int main() {
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        std::cerr << "Incorrect Argument List. Die!" << std::endl;
+        exit(1);
+    }
+
+    TEMPO_IP = argv[1];
     trace_structure query_trace;
     query_trace.num_nodes = 3;
     query_trace.node_names.insert(std::make_pair(0, "frontend"));
@@ -276,14 +295,14 @@ int main() {
 	start = boost::posix_time::microsec_clock::local_time();
     // start time and end time should be in seconds. 
     // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539);
-    auto res = get_traces_by_structure(query_trace, 1660663613, 1660663620, conditions);
+    auto res = get_traces_by_structure(query_trace, 1660683159, 1660683166, conditions);
     // auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
     stop = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration dur = stop - start;
 	int64_t milliseconds = dur.total_milliseconds();
 	std::cout << "Time taken: " << milliseconds << std::endl;
     // auto res = get_traces_by_structure(query_trace, 1660060182, 1660060192);
-    // std::cout << "Response: " << res.size() << std::endl;
+    std::cout << "Response: " << res.size() << std::endl;
     // std::cout << "Response: " << res[0] << std::endl;
     return 0;
 }
