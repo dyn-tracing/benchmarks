@@ -1,100 +1,15 @@
-All queries are performed on custom interval of 10 seconds
+Plain Query:
+    Query: Get trace with id <trace_id>
+    Resolution: Tempo has bloom filters for search by trace id, Snicket has SBT index
 
-Q1: 
-GET trace ids where (frontend)->(adservice)->(a)
+    Tempo:
+        With Data Coming In:
+            Get traces that are 1 minute old (i.e., are at VM): 18 milliseconds
+            Get traces that are 20 minutes old (i.e., are at GCS) : 230 milliseconds
+        With No Data Coming In:
+            Get traces that are 1 minute old (i.e., are at VM): 17 milliseconds
+            Get traces that are 20 minutes old (i.e., are at GCS): 124.5 milliseconds
 
-46049
-76907
-61901
-48709
-47959
-54906
-55625
-50921
-60344
-63150
-63792
-49381
-50844
-50320
-56315
-56834
-54760
-61724
-63505
-58188
-
-Q2:
-GET trace ids where (frontend)->(adservice)->(currencyservice)
-
-43202
-58000
-56691
-53367
-50604
-58861
-61051
-51006
-52873
-54511
-54686
-46527
-61522
-50390
-55068
-56800
-48930
-53741
-50983
-50212
-
-Q3: 
-GET trace ids where (frontend)->(adservice)->(checkoutservice) where end to end latency greater than 100 milliseconds
-
-51748
-58481
-56816
-55650
-50257
-62140
-63999
-58449
-46452
-50629
-67219
-47026
-53204
-69152
-55022
-55233
-62224
-55539
-52312
-55347
-
-Q4: 
-GET trace ids where (frontend)->(adservice)->(checkoutservice) where duration of checkoutservice span is greater than 50 milliseconds
-
-43392
-51488
-48708
-47677
-66235
-45879
-65216
-50483
-58942
-48346
-45307
-46678
-45116
-51302
-47194
-51211
-46715
-59362
-66973
-46753
-
-Q5: 
-GET trace ids where (frontend)->(adservice)->(a) AND starttime of adservice span is greater than x
+    Snicket++:
+        Get traces that are 1 minute old : ??
+        Get traces that are 20 minute old : ??
