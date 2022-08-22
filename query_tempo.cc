@@ -216,14 +216,14 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
 
     auto traces_metadata = get_trace_ids_for_interval(start_time, end_time, limit);
     
-    std::vector<std::string> response;
-    for (auto ele : traces_metadata) {
-        auto res = fetch_and_filter(ele, query_trace, start_time, end_time, conditions);
-        if (false == res.empty()) {
-            response.push_back(res);
-        }
-    }
-    return response;
+    // std::vector<std::string> response;
+    // for (auto ele : traces_metadata) {
+    //     auto res = fetch_and_filter(ele, query_trace, start_time, end_time, conditions);
+    //     if (false == res.empty()) {
+    //         response.push_back(res);
+    //     }
+    // }
+    // return response;
 
     std::vector<std::future<std::string>> response_futures;
 
