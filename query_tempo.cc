@@ -295,12 +295,14 @@ int main(int argc, char *argv[]) {
     query_trace.num_nodes = 3;
     query_trace.node_names.insert(std::make_pair(0, "frontend"));
     query_trace.node_names.insert(std::make_pair(1, "adservice"));
-    query_trace.node_names.insert(std::make_pair(2, "currencyservice"));
+    query_trace.node_names.insert(std::make_pair(2, "checkoutservice"));
 
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
-    std::vector<std::vector<std::string>> conditions;
+    std::vector<std::vector<std::string>> conditions = {
+        {"0", "duration", "100"}
+    };
 
     for (int i = 0; i < 20; i++) {
         boost::posix_time::ptime start, stop;
@@ -312,7 +314,7 @@ int main(int argc, char *argv[]) {
         stop = boost::posix_time::microsec_clock::local_time();
         boost::posix_time::time_duration dur = stop - start;
         int64_t milliseconds = dur.total_milliseconds();
-        std::cout << "Time taken: " << milliseconds << std::endl;
+        std::cout << milliseconds << std::endl;
     }
     return 0;
 }
