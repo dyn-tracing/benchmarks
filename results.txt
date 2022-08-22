@@ -1,33 +1,19 @@
-Strategy: Let the cluster run for 10 minutes so that there are some traces (being generated at 10k traces /s )
+All queries are performed on custom interval of 10 seconds
 
-Graph Query:
-    Query: Get me all traces where frontend calls adservice which calls some other service. 
-    Resolution: Tempo brute forces, snicket has a folders index
+Q1: 
+GET trace ids where (frontend)->(adservice)->(a)
 
-    Tempo:
-        With Data Coming In:
-            Get traces that are 1 minute old (i.e., are at VM): 29 seconds
-            Get traces that are 20 minutes old (i.e., are at GCS) : 42.2 seconds
-        With No Data Coming In:
-            Get traces that are 1 minute old (i.e., are at VM): 9 seconds
-            Get traces that are 20 minutes old (i.e., are at GCS): 25.1 seconds
+Q2:
+GET trace ids where (frontend)->(adservice)->(currencyservice)
 
-    Snicket++:
-        Get traces that are 1 minute old : 2.9 seconds
-        Get traces that are 20 minute old : 3.0 seconds
+Q3:
+GET trace ids where (frontend)->(adservice)->(adservice)
 
-Plain Query:
-    Query: Get trace with id <trace_id>
-    Resolution: Tempo has bloom filters for search by trace id, Snicket has SBT index
+Q4: 
+GET trace ids where (frontend)->(adservice)->(checkoutservice) where end to end latency greater than 100 milliseconds
 
-    Tempo:
-        With Data Coming In:
-            Get traces that are 1 minute old (i.e., are at VM): 18 milliseconds
-            Get traces that are 20 minutes old (i.e., are at GCS) : 230 milliseconds
-        With No Data Coming In:
-            Get traces that are 1 minute old (i.e., are at VM): 17 milliseconds
-            Get traces that are 20 minutes old (i.e., are at GCS): 124.5 milliseconds
+Q5: 
+GET trace ids where (frontend)->(adservice)->(checkoutservice) where duration of checkoutservice span is greater than 50 milliseconds
 
-    Snicket++:
-        Get traces that are 1 minute old : ??
-        Get traces that are 20 minute old : ??
+Q6: 
+GET trace ids where (frontend)->(adservice)->(a) AND starttime of adservice span is greater than x

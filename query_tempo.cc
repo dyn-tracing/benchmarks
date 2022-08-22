@@ -276,7 +276,7 @@ json get_trace_by_id(std::string trace_id, int start_time = -1, int end_time = -
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
+    if (argc < 2) {
         std::cerr << "Incorrect Argument List. Die!" << std::endl;
         exit(1);
     }
@@ -286,31 +286,24 @@ int main(int argc, char *argv[]) {
     query_trace.num_nodes = 3;
     query_trace.node_names.insert(std::make_pair(0, "frontend"));
     query_trace.node_names.insert(std::make_pair(1, "adservice"));
-    query_trace.node_names.insert(std::make_pair(2, ASTERISK_SERVICE));
+    query_trace.node_names.insert(std::make_pair(2, "currencyservice"));
 
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
     std::vector<std::vector<std::string>> conditions;
-    
-    if (argv[2] != "no_condition") {
-        conditions = {
-            {"0", "duration", "100"}
-        };
-    }
 
-    boost::posix_time::ptime start, stop;
-	start = boost::posix_time::microsec_clock::local_time();
-    // start time and end time should be in seconds. 
-    // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539);
-    auto res = get_traces_by_structure(query_trace, 1660683159, 1660683166, conditions);
-    // auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
-    stop = boost::posix_time::microsec_clock::local_time();
-    boost::posix_time::time_duration dur = stop - start;
-	int64_t milliseconds = dur.total_milliseconds();
-	std::cout << "Time taken: " << milliseconds << std::endl;
-    // auto res = get_traces_by_structure(query_trace, 1660060182, 1660060192);
-    std::cout << "Response: " << res.size() << std::endl;
-    // std::cout << "Response: " << res[0] << std::endl;
+    for (int i = 0; i < 20; i++) {
+        boost::posix_time::ptime start, stop;
+        start = boost::posix_time::microsec_clock::local_time();
+        // start time and end time should be in seconds. 
+        // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539);
+        auto res = get_traces_by_structure(query_trace, 1660683159, 1660683169, conditions);
+        // auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
+        stop = boost::posix_time::microsec_clock::local_time();
+        boost::posix_time::time_duration dur = stop - start;
+        int64_t milliseconds = dur.total_milliseconds();
+        std::cout << "Time taken: " << milliseconds << std::endl;
+    }
     return 0;
 }
