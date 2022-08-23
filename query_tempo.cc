@@ -147,7 +147,6 @@ trace_structure morph_json_to_trace_struct(json trace_json) {
 json get_trace_ids_for_interval(int start_time, int end_time, int limit) {
     std::string url = std::string(TEMPO_IP) + std::string(TEMPO_SEARCH) + "?start=" + \
         std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=" + std::to_string(limit);
-    std::cout << url << std::endl;
     auto raw_response = http_get(url);
     auto response = convert_search_result_to_json(raw_response);
     if (response["traces"] == NULL) {
@@ -226,7 +225,6 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     // }
     // return response;
 
-    std::cout << "tot: " << traces_metadata.size() << std::endl;
 
     std::vector<std::future<std::string>> response_futures;
 
@@ -235,7 +233,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
         response_futures.push_back(
             std::async(std::launch::async, fetch_and_filter, ele, query_trace, start_time, end_time, conditions));
         
-        if (count%500 == 0) {
+        if (count%200 == 0) {
             response_futures[response_futures.size()-1].wait();
         }
         count++;
@@ -320,7 +318,6 @@ int main(int argc, char *argv[]) {
         int64_t milliseconds = dur.total_milliseconds();
         std::cout << milliseconds << std::endl;
         std::cout << "res: " << res.size() << std::endl;
-        break;
     }
     return 0;
 }
