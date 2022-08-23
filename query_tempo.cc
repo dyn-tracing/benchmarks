@@ -147,6 +147,7 @@ trace_structure morph_json_to_trace_struct(json trace_json) {
 json get_trace_ids_for_interval(int start_time, int end_time, int limit) {
     std::string url = std::string(TEMPO_IP) + std::string(TEMPO_SEARCH) + "?start=" + \
         std::to_string(start_time) + "&end=" + std::to_string(end_time) + "&limit=" + std::to_string(limit);
+    std::cout << url << std::endl;
     auto raw_response = http_get(url);
     auto response = convert_search_result_to_json(raw_response);
     if (response["traces"] == NULL) {
@@ -225,6 +226,8 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     // }
     // return response;
 
+    std::cout << "tot: " << traces_metadata.size() << std::endl;
+
     std::vector<std::future<std::string>> response_futures;
 
     int count = 1;
@@ -285,12 +288,15 @@ json get_trace_by_id(std::string trace_id, int start_time = -1, int end_time = -
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
+    if (argc < 4) {
         std::cerr << "Incorrect Argument List. Die!" << std::endl;
         exit(1);
     }
 
     TEMPO_IP = argv[1];
+    std::string start_time = argv[2];
+    std::string end_time = argv[3];
+
     trace_structure query_trace;
     query_trace.num_nodes = 3;
     query_trace.node_names.insert(std::make_pair(0, "frontend"));
@@ -307,12 +313,14 @@ int main(int argc, char *argv[]) {
         start = boost::posix_time::microsec_clock::local_time();
         // start time and end time should be in seconds. 
         // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539);
-        auto res = get_traces_by_structure(query_trace, 1661199932, 1661199942, conditions);
+        auto res = get_traces_by_structure(query_trace, std::stoi(start_time), std::stoi(end_time), conditions);
         // auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
         stop = boost::posix_time::microsec_clock::local_time();
         boost::posix_time::time_duration dur = stop - start;
         int64_t milliseconds = dur.total_milliseconds();
         std::cout << milliseconds << std::endl;
+        std::cout << "res: " << res.size() << std::endl;
+        break;
     }
     return 0;
 }
