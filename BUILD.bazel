@@ -47,3 +47,18 @@ cc_binary(
     ],
     linkopts = ["-lcurl"],
 )
+
+cc_binary(
+    name = "es_query",
+    srcs = [
+        "query_es.cc",
+        "query_es.h",
+    ],
+    deps = [
+        "@com_github_nlohmann_json//:json",
+        "@boost//:algorithm",
+        "@boost//:graph",
+        "//:common",
+    ],
+    linkopts = ["-lcurl"],
+)
