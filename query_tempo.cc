@@ -1,17 +1,62 @@
 #include "query_tempo.h"
 
+typedef unsigned char uchar;
+
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
-std::string http_get(std::string url) {
+static std::string base64_encode(const std::string &in) {
+
+    std::string out;
+
+    int val = 0, valb = -6;
+    for (uchar c : in) {
+        val = (val << 8) + c;
+        valb += 8;
+        while (valb >= 0) {
+            out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(val>>valb)&0x3F]);
+            valb -= 6;
+        }
+    }
+    if (valb>-6) out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[((val<<8)>>(valb+8))&0x3F]);
+    while (out.size()%4) out.push_back('=');
+    return out;
+}
+
+static std::string base64_decode(const std::string &in) {
+
+    std::string out;
+
+    std::vector<int> T(256,-1);
+    for (int i=0; i<64; i++) T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i;
+
+    int val=0, valb=-8;
+    for (uchar c : in) {
+        if (T[c] == -1) break;
+        val = (val << 6) + T[c];
+        valb += 6;
+        if (valb >= 0) {
+            out.push_back(char((val>>valb)&0xFF));
+            valb -= 8;
+        }
+    }
+    return out;
+}
+
+std::string http_get(std::string url, std::string auth_header="") {
     CURL * curl;
     CURLcode res;
     std::string readBuffer;
 
     curl = curl_easy_init();
     if(curl) {
+        struct curl_slist* headers = nullptr;
+        auto hdr = "Authorization: Basic " + auth_header;
+        headers = curl_slist_append(headers, hdr.c_str());
+
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -273,53 +318,41 @@ std::vector<std::string> get_traces_by_structure(trace_structure query_trace, in
     return response;
 }
 
-json get_trace_by_id(std::string trace_id, int start_time = -1, int end_time = -1) {
-    std::string url = std::string(TEMPO_IP) + std::string(TEMPO_TRACES) + trace_id;
+json get_trace_by_id(std::string trace_id, std::string index_name, int start_time = -1, int end_time = -1) {
+    std::string url = std::string(TEMPO_IP) + "/" + index_name + "/_search?q=traceID:" + trace_id; 
     
     if (start_time != -1 && end_time != -1) {
         url += "?start=" + std::to_string(start_time) + "&end=" + std::to_string(end_time);
     }
 
-    auto raw_response = http_get(url);
+    auto raw_response = http_get(url, base64_encode("elastic:changeme"));
     return convert_search_result_to_json(raw_response);
 }
 
-
+/**
+ * bazel run :tempo_gq http://34.121.212.52:9200 jaeger-span-2022-09-02 f22a98c757771ff2bcba3cd00dad91d1
+ * */
 int main(int argc, char *argv[]) {
-    if (argc < 4) {
-        std::cerr << "Incorrect Argument List. Die!" << std::endl;
-        exit(1);
-    }
-
     TEMPO_IP = argv[1];
-    std::string start_time = argv[2];
-    std::string end_time = argv[3];
-
-    trace_structure query_trace;
-    query_trace.num_nodes = 3;
-    query_trace.node_names.insert(std::make_pair(0, "frontend"));
-    query_trace.node_names.insert(std::make_pair(1, "adservice"));
-    query_trace.node_names.insert(std::make_pair(2, "checkoutservice"));
-
-    query_trace.edges.insert(std::make_pair(0, 1));
-    query_trace.edges.insert(std::make_pair(1, 2));
-
-    std::vector<std::vector<std::string>> conditions = {
-        {"0", "duration", "100"}
-    };
+    auto index_name = argv[2];
+    auto trace_id = argv[3];
 
     for (int i = 0; i < 20; i++) {
         boost::posix_time::ptime start, stop;
         start = boost::posix_time::microsec_clock::local_time();
-        // start time and end time should be in seconds. 
-        // auto res = get_traces_by_structure(query_trace, 1660072537, 1660072539);
-        auto res = get_traces_by_structure(query_trace, std::stoi(start_time), std::stoi(end_time), conditions);
-        // auto res = get_trace_by_id("b96eb07ea82e6c87bfe72fea225420c0");
+
+        auto res = get_trace_by_id(trace_id, index_name);
+
         stop = boost::posix_time::microsec_clock::local_time();
         boost::posix_time::time_duration dur = stop - start;
         int64_t milliseconds = dur.total_milliseconds();
-        std::cout << milliseconds << std::endl;
-        std::cout << "res: " << res.size() << std::endl;
+        std::cout << "Time taken: " << milliseconds << std::endl;
+
+        if (res["hits"]["hits"][0]["_source"]["traceID"] != trace_id) {
+            std::cout << "Not Getting Res" << std::endl;
+            std::cout << std::setw(4) << res << std::endl;
+            exit(1);
+        }
     }
     return 0;
 }

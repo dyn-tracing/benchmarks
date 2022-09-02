@@ -113,7 +113,7 @@ struct vf2_callback_custom {
 using json = nlohmann::json;
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp);
-std::string http_get(std::string url);
+std::string http_get(std::string url, std::string auth_header);
 json convert_search_result_to_json(std::string data);
 std::vector<std::unordered_map<int, int>> get_isomorphism_mappings (
     trace_structure &candidate_trace, trace_structure &query_trace);
