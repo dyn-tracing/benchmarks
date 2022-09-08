@@ -279,16 +279,22 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
     auto traces_metadata = get_trace_ids_for_interval(start_time, end_time, limit);
 
     std::vector<std::future<std::string>> response_futures;
+    std::unordered_set<std::string> alread_seen;
 
     int count = 1;
     for (auto ele : traces_metadata) {
-        response_futures.push_back(
+        std::string traceid = ele["_source"]["traceID"];
+
+
+        if (alread_seen.find(traceid) == alread_seen.end()) {
+            response_futures.push_back(
             std::async(std::launch::async, fetch_and_filter, ele, query_trace, start_time, end_time, conditions));
-        
-        if (count%1000 == 0) {
-            response_futures[response_futures.size()-1].wait();
+            alread_seen.insert(traceid);
+            if (count%1000 == 0) {
+                response_futures[response_futures.size()-1].wait();
+            }
+            count++;
         }
-        count++;
     }
 
     std::vector<std::string> response;
@@ -367,7 +373,7 @@ int main(int argc, char *argv[]) {
     query_trace.num_nodes = 3;
     query_trace.node_names.insert(std::make_pair(0, "frontend"));
     query_trace.node_names.insert(std::make_pair(1, "adservice"));
-    query_trace.node_names.insert(std::make_pair(2, "checkoutservice"));
+    query_trace.node_names.insert(std::make_pair(2, ASTERISK_SERVICE));
 
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
