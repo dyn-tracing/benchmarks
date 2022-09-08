@@ -34,22 +34,7 @@ cc_library(
 )
 
 cc_binary(
-    name = "tempo_gq",
-    srcs = [
-        "query_tempo.cc",
-        "query_tempo.h",
-    ],
-    deps = [
-        "@com_github_nlohmann_json//:json",
-        "@boost//:algorithm",
-        "@boost//:graph",
-        "//:common",
-    ],
-    linkopts = ["-lcurl"],
-)
-
-cc_binary(
-    name = "es_query",
+    name = "es_gq",
     srcs = [
         "query_es.cc",
         "query_es.h",

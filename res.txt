@@ -1,0 +1,2 @@
+- get all trace ids between an interval
+- for each trace id find if structure and a condition matches
