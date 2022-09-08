@@ -1,6 +1,11 @@
 #ifndef BY_STRUCT_H_ // NOLINT
 #define BY_STRUCT_H_
 
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+
 #include "common.h"
 #include "nlohmann/json.hpp"
 #include <curl/curl.h>
@@ -9,6 +14,7 @@
 
 
 std::string TEMPO_IP = "http://35.226.30.88";
+std::string INDEX_NAME = "";
 const char TEMPO_SEARCH[] = ":3200/api/search";
 const char TEMPO_TRACES[] = ":16686/api/traces/";
 
@@ -36,7 +42,7 @@ struct trace_structure {
 };
 
 // This is the highest level function
-std::vector<std::string> get_traces_by_structure(trace_structure query_trace, int start_time, int end_time, std::vector<std::vector<std::string>> conditions);
+std::vector<std::string> get_traces_by_structure(trace_structure query_trace, std::string start_time, std::string end_time, std::vector<std::vector<std::string>> conditions);
 
 template < typename PropertyMapFirst, typename PropertyMapSecond >
 struct property_map_equivalent_custom {
@@ -113,15 +119,14 @@ struct vf2_callback_custom {
 using json = nlohmann::json;
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp);
-std::string http_get(std::string url, std::string auth_header);
+std::string http_get(std::string url, std::string auth_header, std::string query);
 json convert_search_result_to_json(std::string data);
 std::vector<std::unordered_map<int, int>> get_isomorphism_mappings (
     trace_structure &candidate_trace, trace_structure &query_trace);
 graph_type morph_trace_structure_to_boost_graph_type(trace_structure &input_graph);
 trace_structure morph_json_to_trace_struct(json trace_json);
-std::vector<std::string> get_traces_by_structure_for_interval(trace_structure query_trace, int start_time, int end_time, int limit, std::vector<std::vector<std::string>> conditions);
-json get_trace_ids_for_interval(int start_time, int end_time, int limit);
-std::string fetch_and_filter(json trace_metadata, trace_structure query_trace, int start, int end, std::vector<std::vector<std::string>> conditions);
-std::string fetch_trace(std::string trace_id, int start, int end);
-
+std::vector<std::string> get_traces_by_structure_for_interval(trace_structure query_trace, std::string start_time, std::string end_time, int limit, std::vector<std::vector<std::string>> conditions);
+json get_trace_ids_for_interval(std::string start_time, std::string end_time, int limit);
+std::string fetch_and_filter(json trace_metadata, trace_structure query_trace, std::string start, std::string end, std::vector<std::vector<std::string>> conditions);
+std::string fetch_trace(std::string trace_id);
 #endif  // BY_STRUCT_H_ // NOLINT

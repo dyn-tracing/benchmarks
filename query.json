@@ -1,0 +1,10 @@
+{
+    "query": {
+        "range": {
+            "startTimeMillis": {
+                "gte": 1,
+                "lte": 2
+            }
+        }
+    }
+}

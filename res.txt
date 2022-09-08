@@ -1,2 +1,28 @@
 - get all trace ids between an interval
 - for each trace id find if structure and a condition matches
+
+
+curl -X GET "localhost:9200/my-index-000001/_search" -H 'Content-Type: application/json' -d'
+{
+  "query": {
+    "match": {
+      "user.id": "kimchy"
+    }
+  }
+}
+'
+
+
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+  "query": {
+    "range": {
+      "age": {
+        "gte": 10,
+        "lte": 20,
+        "boost": 2.0
+      }
+    }
+  }
+}
+'
