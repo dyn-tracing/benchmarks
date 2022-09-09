@@ -67,14 +67,23 @@ std::string http_get(std::string url, std::string auth_header="", std::string qu
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
+        long http_code = 0;
         res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
+        curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-        return readBuffer;
+        if (http_code == 200 && res != CURLE_ABORTED_BY_CALLBACK) {
+            curl_easy_cleanup(curl);
+            return readBuffer;
+        } else {
+            curl_easy_cleanup(curl);
+            std::cout << "YO HTTP GET FAILURE " << url << std::endl;
+            std::cout << "http_code:  " << http_code << std::endl;
+            std::cout << "curl_code:  " << res << std::endl;
+            exit(1);
+        }
     }
 
-    std::cout << "YO HTTP GET FAILURE " << url << std::endl;
-    exit(1);
+    std::cout << "YO HTTP GET FAILURE (no curl instance)" << url << std::endl;
     return "";
 }
 
@@ -83,7 +92,7 @@ json convert_search_result_to_json(std::string data) {
     try {
         obj = json::parse(data);
     } catch(const std::exception& e) {
-        std::cerr << std::setw(4) << data << std::endl;
+        std::cerr << std::setw(4) << "-- " << data << std::endl;
         std::cerr << e.what() << '\n';
         exit(1);
     }
@@ -290,7 +299,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
             response_futures.push_back(
             std::async(std::launch::async, fetch_and_filter, ele, query_trace, start_time, end_time, conditions));
             alread_seen.insert(traceid);
-            if (count%1000 == 0) {
+            if (count%50 == 0) {
                 response_futures[response_futures.size()-1].wait();
             }
             count++;
@@ -373,13 +382,13 @@ int main(int argc, char *argv[]) {
     query_trace.num_nodes = 3;
     query_trace.node_names.insert(std::make_pair(0, "frontend"));
     query_trace.node_names.insert(std::make_pair(1, "adservice"));
-    query_trace.node_names.insert(std::make_pair(2, ASTERISK_SERVICE));
+    query_trace.node_names.insert(std::make_pair(2, "checkoutservice"));
 
     query_trace.edges.insert(std::make_pair(0, 1));
     query_trace.edges.insert(std::make_pair(1, 2));
 
     std::vector<std::vector<std::string>> conditions = {
-        // {"0", "duration", "100"}
+        {"0", "duration", "100"}
     };
 
     for (int i = 0; i < 1; i++) {
@@ -393,6 +402,7 @@ int main(int argc, char *argv[]) {
         int64_t milliseconds = dur.total_milliseconds();
         std::cout << milliseconds << std::endl;
         std::cout << "res: " << res.size() << std::endl;
+        sleep(3);
     }
     return 0;
 }
