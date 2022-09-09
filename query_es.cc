@@ -299,7 +299,7 @@ std::vector<std::string> get_traces_by_structure_for_interval(trace_structure qu
             response_futures.push_back(
             std::async(std::launch::async, fetch_and_filter, ele, query_trace, start_time, end_time, conditions));
             alread_seen.insert(traceid);
-            if (count%50 == 0) {
+            if (count%20 == 0) {
                 response_futures[response_futures.size()-1].wait();
             }
             count++;
